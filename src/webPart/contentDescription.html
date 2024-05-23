@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Description</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.3.0/dist/web3.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body style="width: calc(100% - 70px); height: 100%; padding: 20px;">
+
+    <!-- Image Description Class -->
+    <div class="discClass" style="display: flex; flex-direction: column; height: 100vh; align-items: center;">
+        <div style="font-size: 60px; font-weight: 500; margin-bottom: 20px;">
+            Selected Reel Description!
+        </div>
+        <div class="content"
+            style="margin-top: 40px; width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        </div>
+    </div>
+
+
+    <!-- share Image Dialog Img  -->
+    <div class="shareImgDialog"
+        style="display: none;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);width: 500px;height: 200px;padding: 20px;background-color: white;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);border-radius: 10px;">
+        <div style="display: flex;flex-direction: column;justify-content: center;align-items: center;height: 200px;">
+            <input class="walletAddress" type="text" placeholder="Enter Wallet address"
+                style="width: 60%;padding: 20px;margin-bottom: 20px;font-size: 30px;border: 1px solid #ccc;border-radius: 5px;">
+            <button onclick="hideBox()"
+                style="width: 80%;padding: 20px;background-color: black;color: white;font-size: 30px;border: none;border-radius: 10px;cursor: pointer;">Submit</button>
+        </div>
+    </div>
+
+
+    <!-- create Image Content  -->
+    <div class="createImgContentDialog"
+        style="display: none;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);width: 500px;height: 200px;padding: 20px;background-color: white;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);border-radius: 10px;">
+        <div style="display: flex;flex-direction: column;justify-content: center;align-items: center;height: 200px;">
+            <input class="contentId" type="text" placeholder="Enter Unique Content Id"
+                style="width: 60%;padding: 20px;margin-bottom: 20px;font-size: 30px;border: 1px solid #ccc;border-radius: 5px;">
+            <button onclick="hideContent()"
+                style="width: 80%;padding: 20px;background-color: black;color: white;font-size: 30px;border: none;border-radius: 10px;cursor: pointer;">Create Content</button>
+        </div>
+    </div>
+
+
+    <!-- js code here -->
+    <script>
+        const contractAddress = '0xabb61d5e6bf5687062eeace46acc9c9fd2db01f4';
+        const web3 = new Web3(Web3.givenProvider); // Connect to the Ethereum provider
+
+
+        // contract Declaration 
+        async function loadContract() {
+            const response = await fetch('/src/web3/abi.json');
+            const abi = await response.json();
+            return new web3.eth.Contract(abi, contractAddress);
+        }
+
+
+        // create Content 
+        async function createContent(contract) {
+            const accounts = await web3.eth.getAccounts();
+            const fromAddress = localStorage.getItem('metamaskUserAddress') || accounts[0];
+            const nonce = await web3.eth.getTransactionCount(fromAddress, 'latest');
+
+            const transaction = contract.methods.createContent($('.contentId').val(), "img", localStorage.getItem("clickedItemImg"));
+            const options = {
+                from: fromAddress,
+                to: contractAddress,
+                data: transaction.encodeABI(),
+                gas: await transaction.estimateGas({ from: fromAddress }),
+                gasPrice: await web3.eth.getGasPrice(),
+                nonce: nonce,
+            };
+
+            web3.eth.sendTransaction(options)
+                .on('transactionHash', function(hash){
+                    console.log('Transaction Hash:', hash);
+                })
+                .on('receipt', function(receipt){
+                    $('.createImgContentDialog').hide();
+                    $('.discClass').css({ 'filter': 'blur(0px)' });
+                    console.log('Transaction Receipt:', receipt);
+                })
+                .on('error', function(error, receipt) {
+                    console.error('Error:', error, 'Receipt:', receipt);
+                });
+        }
+
+
+        // transfer Content 
+        async function transferContent(contract){
+
+            const accounts = await web3.eth.getAccounts();
+            const fromAddress = localStorage.getItem('metamaskUserAddress') || accounts[0];
+            const nonce = await web3.eth.getTransactionCount(fromAddress, 'latest');
+
+            const transaction = contract.methods.transferContent( $(".walletAddress").val() , $('.contentId').val());
+            const options = {
+                from: fromAddress,
+                to: contractAddress,
+                data: transaction.encodeABI(),
+                gas: await transaction.estimateGas({ from: fromAddress }),
+                gasPrice: await web3.eth.getGasPrice(),
+                nonce: nonce,
+            };
+
+            web3.eth.sendTransaction(options)
+                .on('transactionHash', function(hash){
+                    console.log('Transaction Hash:', hash);
+                })
+                .on('receipt', function(receipt){
+
+                    $('.shareImgDialog').hide();
+                    $('.discClass').css({ 'filter': 'blur(0px)' });
+                    console.log('Transaction Receipt:', receipt);
+                })
+                .on('error', function(error, receipt) {
+                    console.error('Error:', error, 'Receipt:', receipt);
+                }); 
+        }
+
+
+        // activity on Start
+        async function initialize() {
+            const contract = await loadContract();
+
+            $(document).ready(async function () {
+                const img = `<div>
+                    <img src="${localStorage.getItem("clickedItemImg")}" width="800" height="1500">
+                </div>`;
+
+                const btn = `<div class="shareImg" style="background-color: black; color: white; border: none; padding: 40px; padding-left: 90px; padding-right: 90px; width: fit-content; border-radius: 20px; cursor: pointer; font-size: 30px; font-family: monospace; transition: background-color 0.3s; margin-top: 60px;">
+                    Share Content to un-subscribe Users!
+                </div>`;
+
+                const btnTwo = `<div class="createContent" style="background-color: black; color: white; border: none; padding: 40px; padding-left: 90px; padding-right: 90px; width: fit-content; border-radius: 20px; cursor: pointer; font-size: 30px; font-family: monospace; transition: background-color 0.3s; margin-top: 60px;">
+                    Create a new Content
+                </div>`;
+
+                $(".content").append(img);
+                $(".content").append(btnTwo);
+                $(".content").append(btn);
+
+                $('.shareImg').click(function () {
+                    $('.shareImgDialog').show();
+                    $('.createImgContentDialog').hide() 
+                    $('.discClass').css({ 'filter': 'blur(10px)' });
+                });
+
+               $('.createContent').click(function() {
+                    $('.shareImgDialog').hide();
+                    $('.createImgContentDialog').show() 
+                    $('.discClass').css({ 'filter': 'blur(10px)' }); 
+               }) 
+
+                hideBox = async function() {
+
+                    if($('.walletAddress').val() === ''){
+                        alert("please enter wallet address")
+                    }else{
+                        await transferContent(contract);
+
+                    }
+                  
+                };
+
+
+                hideContent =  async function() {
+                    if($('.contentId').val() === ''){
+                        alert("please enter unique address")
+                    }else{
+                        await createContent(contract);
+                    }
+                };
+            });
+        }
+
+        initialize();
+    </script>
+</body>
+</html>

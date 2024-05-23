@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<body style="width: calc(100% - 15px); height: 100vh; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+
+
+
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/MetaMask_Fox.svg/1200px-MetaMask_Fox.svg.png" width="800" height="800" >
+
+
+    <div  class="openMetaMask" style = " background-color: black;
+    color: white;
+    border: none;
+    padding: 40px;
+    padding-left: 90px;
+    padding-right: 90px;
+    width: fit-content;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 30px;
+    font-family: monospace;
+    transition: background-color 0.3s;
+    margin-top: 60px
+    ">
+        Login App With meta - mask  !
+    </div>
+
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            if(localStorage.getItem("metamaskUserAddress") !== undefined && localStorage.getItem("metamaskUserAddress") !== null){
+                window.location.href = '/src/webPart/ott.html';
+ 
+            }else{
+
+            $(".openMetaMask").click(async function () {
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        // Request account access if needed
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        // Get the user's Ethereum address
+                        const userAddress = accounts[0];
+                        localStorage.setItem('metamaskUserAddress', userAddress)
+                        // Optionally redirect to another page
+                        window.location.href = '/src/webPart/ott.html';
+                    } catch (error) {
+                        console.error('User denied account access', error);
+                    }
+                } else {
+                    alert('MetaMask is not installed. Please install it to use this app.');
+                }
+            });
+          }
+        });
+    
+    </script>
+
+</body>
+</html>

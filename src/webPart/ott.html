@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<body style="width: calc(100% - 70px); height: 100%; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+
+<div class="ottClass" style="display: flex; flex-direction: column; height: 100vh; align-items: center;">
+
+<div class="title" style="font-size: 60px; font-weight: 500; margin-bottom: 20px;">
+   Subscriber OTT Content Sharing !
+</div>  
+    
+
+<div class="reelsForOTTs">
+    <!-- Dynamic content will be inserted here -->
+</div>
+
+</div>
+
+ <!-- Transection Proceed  dialog  -->
+ <div class="transferDiv"
+ style="display: none;position: fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);width: 500px;height: fit-content; overflow: auto; padding: 25px;background-color: white;box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);border-radius: 10px; border: 5px solid black; padding-top: 5px;">
+ 
+ <div style="display: flex;flex-direction: column;justify-content: center;align-items: center;height: fit-content; padding-left: 20px;">
+  
+    
+    <div class="crossClicks" style="font-size: 60px;
+    font-weight: 500;
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: row;
+    width: 100%;
+    font-family: monospace;
+    margin-left: auto;">
+        ×
+     </div>  
+
+    <div class="text" style="font-size: 35px; font-weight: 500; margin-bottom: 20px; font-family: monospace;">
+        For Open this Content You need to give some transaction fees to whose u transfer this content !
+     </div>  
+
+     <button onclick="proceedTransection()" style="width: 80%;padding: 20px;background-color: black;color: white;font-size: 30px;border: none;border-radius: 10px;cursor: pointer; font-family: monospace;">
+        Proceed Transection</button>
+
+ </div>
+</div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web3@1.3.0/dist/web3.min.js"></script>
+
+<script>
+
+const contractAddress = '0xabb61d5e6bf5687062eeace46acc9c9fd2db01f4';
+const web3 = new Web3(Web3.givenProvider); // Connect to the Ethereum provider
+async function loadContract() {
+            const response = await fetch('/src/web3/abi.json');
+            const abi = await response.json();
+            return new web3.eth.Contract(abi, contractAddress);
+        }
+
+$(document).ready(async function () {
+const userAddress = localStorage.getItem("metamaskUserAddress");
+const contract = await loadContract();
+
+console.log(contract)
+if(localStorage.getItem("metamaskUserAddress") === '0x62b752e89811bd4626fca486c73fe2320cd9835b'){
+    $('.title').text("Subscriber OTT  Dashboard")
+
+    $.getJSON('/src/webPart/ottContent.json', function(data) {
+    var count = 0;
+    var html = '';
+    var index = 0; // to keep track of the index of the images
+
+    $(data.items).each(function(i, value) {
+        $(value.contentList).each(function(j, d) {
+            html += `<img src="${d.image}" width="50%" height="800" class="content-item" data-img="${d.image}">`;
+            count++;
+            index++;
+
+            if (count === 2) {
+                // Append the current html to a new div with class reelsForOTT
+                $('.reelsForOTTs').append(`<div class="reelsForOTT" style="display: flex; flex-direction: row; gap: 20px; margin-top: 20px">${html}</div>`);
+                // Reset html and count
+                html = '';
+                count = 0;
+            }
+        });
+    });
+
+    // If there are remaining items that didn't complete the last group of 2
+    if (html !== '') {
+        $('.reelsForOTTs').append(`<div class="reelsForOTT" style="display: flex; flex-direction: row; gap: 20px; margin-top: 20px">${html}</div>`);
+    }
+
+    // Add click event listener using evient delegation
+    $('.reelsForOTTs').on('click', '.content-item', function() {
+        var img = $(this).data('img');
+        localStorage.setItem("clickedItemImg" , img)
+         window.location.href = '/src/webPart/contentDescription.html' 
+        // Perform additional actions here
+    });
+})
+   .fail(function(jqXHR, textStatus, errorThrown) {
+    console.log("Error fetching JSON file:", errorThrown);
+});
+
+    }
+    else{
+        $('.title').text("Non - subscriber Dashboard")
+
+        var count = 0;
+        var html = '';
+        var index = 0; 
+        const contentDetails = await contract.methods.getOwnedContentDetails(userAddress).call();
+        contentDetails.forEach(element => {
+
+            console.log(element)
+
+            html += `<img src="${element.url}" width="50%" height="800" class="content-item" data-img="${element.url}" data-oldowner = "${element.oldOwner}" data-owner = "${element.owner}" data-isContentVisible = "${element.isContentVisible}" >`;
+            count++;
+            index++;
+
+            if (count === 2) {
+                // Append the current html to a new div with class reelsForOTT
+                $('.reelsForOTTs').append(`<div class="reelsForOTT" style="display: flex; flex-direction: row; gap: 20px; margin-top: 20px">${html}</div>`);
+                // Reset html and count
+                html = '';
+                count = 0;
+            }
+        });
+
+        if (html !== '') {
+        $('.reelsForOTTs').append(`<div class="reelsForOTT" style="display: flex; flex-direction: row; gap: 20px;margin-top: 20px">${html}</div>`);
+    }
+
+
+     // Add click event listener using evient delegation
+     $('.reelsForOTTs').on('click', '.content-item', function() {
+        var img = $(this).data('img');
+        var oldOwner = $(this).data('oldowner');
+        var owner = $(this).data('owner');
+        var isContentVisible = $(this).data('iscontentvisible')
+
+         console.log(isContentVisible)
+
+    if(isContentVisible === true){
+        alert(" congratulations, ypp! now u have access to see this contant !")
+        }else{
+            localStorage.setItem("oldOwner" , oldOwner);
+        $(".ottClass").css({ 'filter': 'blur(10px)' });
+        $(".transferDiv").show()
+        }
+    });
+
+
+
+   // close dialoag
+   $('.crossClicks').on('click', function() {
+        $(".ottClass").css({ 'filter': 'blur(0px)' });
+        $(".transferDiv").hide() 
+   })
+
+   //transection Proceed 
+  proceedTransection = async function(){
+        const accounts = await web3.eth.getAccounts();
+            const fromAddress = localStorage.getItem('metamaskUserAddress') || accounts[0];
+            const nonce = await web3.eth.getTransactionCount(fromAddress, 'latest');
+
+            const transaction = contract.methods.transferContentFunds(localStorage.getItem("oldOwner"), localStorage.getItem("metamaskUserAddress"), 1000000000000000);
+            const options = {
+                from: fromAddress,
+                to: contractAddress,
+                data: transaction.encodeABI(),
+                gas: await transaction.estimateGas({ from: fromAddress }),
+                gasPrice: await web3.eth.getGasPrice(),
+                nonce: nonce,
+            };
+
+            web3.eth.sendTransaction(options)
+                .on('transactionHash', function(hash){
+                    console.log('Transaction Hash:', hash);
+                })
+                .on('receipt', function(receipt){
+                    $(".ottClass").css({ 'filter': 'blur(0px)' });
+                    $(".transferDiv").hide() 
+                    console.log('Transaction Receipt:', receipt.transactionHash);
+                    window.location.reload();
+                    alert('Transaction Successfull')
+                })
+                .on('error', function(error, receipt) {
+                    alert("not able to Proceed it because have any transection Problem")
+                    $(".ottClass").css({ 'filter': 'blur(0px)' });
+                    $(".transferDiv").hide() 
+                    console.error('Error:', error, 'Receipt:', receipt);
+                
+               });
+           }
+
+    }
+});
+
+</script>
+
+</body>
+</html>
