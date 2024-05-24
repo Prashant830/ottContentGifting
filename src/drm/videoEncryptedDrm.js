@@ -5,10 +5,10 @@
 // for video playing after that decrypt this method oif it is correct
 // certificate for that do permission to open the content for non - subscriber !
 // if it is wrong certificate then return unvailed value to non-subscriber by this non - subscriber not able to open it !
-console.log("certificate vailidation")
+// console.log("certificate vailidation")
 
 // second one method to genrate the certifiacte for indiviual video (certificate genrated algorithmn)!
-console.log("genrate certificate algorithmn!")
+// console.log("genrate certificate algorithmn!")
 
 
 // this whole logic for implement the certificate , or licenece vailidation, genrated drm! 
